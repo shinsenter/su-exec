@@ -1,46 +1,65 @@
-# su-exec
-switch user and group id, setgroups and exec
+# su-exec <!-- omit from toc -->
 
-## Purpose
+Switch user and group, then exec.
 
-This is a simple tool that will simply execute a program with different
-privileges. The program will be executed directly and not run as a child,
-like su and sudo does, which avoids TTY and signal issues (see below).
+## Table of contents <!-- omit from toc -->
+- [Introduction](#introduction)
+- [Installation Using Docker](#installation-using-docker)
+- [Usage](#usage)
+- [Supported platforms](#supported-platforms)
+- [Linux distribution compatibility](#linux-distribution-compatibility)
 
-Notice that su-exec depends on being run by the root user, non-root
-users do not have permission to change uid/gid.
+
+## Introduction
+
+`su-exec` is a minimal re-write of
+[`gosu`](https://github.com/tianon/gosu) in C, resulting in a smaller binary.
+
+This simple tool executes a program with different privileges.
+Unlike `su` and `sudo`, it runs the program directly, avoiding TTY and signal issues.
+
+**Important:** `su-exec` requires root privileges to run.
+Non-root users do not have permission to change uid/gid.
+
+> ### Credits <!-- omit from toc -->
+> This project is based on the inactive project [ncopa/su-exec](https://github.com/ncopa/su-exec)
+and improvements from [songdongsheng/su-exec](https://github.com/songdongsheng/su-exec).
+> Special thanks to them.
+
+## Installation Using Docker
+```Dockerfile
+FROM <base-image>
+COPY --from=shinsenter/su-exec:latest \
+     --chown=root:root --chmod=4755 \
+     /su-exec /usr/sbin/su-exec
+```
 
 ## Usage
-
 ```shell
-su-exec user-spec command [ arguments... ]
+su-exec user-spec command [arguments...]
 ```
 
-`user-spec` is either a user name (e.g. `nobody`) or user name and group
-name separated with colon (e.g. `nobody:ftp`). Numeric uid/gid values
-can be used instead of names. Example:
+The `user-spec` can be either a username (e.g., `nobody`)
+or a username and group name separated by a colon (e.g., `www-data:www-data`).
+You can also use numeric uid/gid values.
 
+### Examples: <!-- omit from toc -->
 ```shell
-$ su-exec apache:1000 /usr/sbin/httpd -f /opt/www/httpd.conf
+su-exec tianon bash
+su-exec nobody:root bash -c 'whoami && id'
+su-exec 1000:1 id
 ```
 
-## TTY & parent/child handling
+## Supported platforms
+- linux/386
+- linux/amd64
+- linux/arm/v6
+- linux/arm/v7
+- linux/arm64/v8
+- linux/ppc64le
+- linux/riscv64
+- linux/s390x
 
-Notice how `su` will make `ps` be a child of a shell while `su-exec`
-just executes `ps` directly.
-
-```shell
-$ docker run -it --rm alpine:edge su postgres -c 'ps aux'
-PID   USER     TIME   COMMAND
-    1 postgres   0:00 ash -c ps aux
-   12 postgres   0:00 ps aux
-$ docker run -it --rm -v $PWD/su-exec:/sbin/su-exec:ro alpine:edge su-exec postgres ps aux
-PID   USER     TIME   COMMAND
-    1 postgres   0:00 ps aux
-```
-
-## Why reinvent gosu?
-
-This does more or less exactly the same thing as [gosu](https://github.com/tianon/gosu)
-but it is only 10kb instead of 1.8MB.
-
+## Linux distribution compatibility
+The `su-exec` in this repository has been tested on various Linux distributions.
+See [test-results.txt](https://github.com/shinsenter/su-exec/blob/master/test-results.txt) for details.

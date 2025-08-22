@@ -1,5 +1,4 @@
-
-CFLAGS ?= -Wall -Werror -g
+CFLAGS  ?= -std=gnu99 -Os -Wall -Wextra -pedantic
 LDFLAGS ?=
 
 PROG := su-exec
